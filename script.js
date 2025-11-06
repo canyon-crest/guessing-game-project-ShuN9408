@@ -8,6 +8,11 @@ var scoreArr = [];
 var winsCount = 0
 
 var playBtn, guessBtn, giveUpBtn, setNameBtn, playerName, guess, msg, dateP, clockP, wins, avgScore, avgTime, fastestP, lb;
+// fireworks / canvas FX Used AI
+var fxCanvas, fxCtx;
+var rockets = [], particles = [];
+var fxRunning = false;
+var fxColors = ['#ff6b6b','#ffd166','#6de7ff','#4f46e5','#3b82f6','#34d399'];
 
 window.onload = function () { // load event
     playBtn = document.getElementById("playBtn");
@@ -24,6 +29,15 @@ window.onload = function () { // load event
     avgTime = document.getElementById("avgTime");
     fastestP = document.getElementById("fastest");
     lb = document.getElementsByName("leaderboard");
+
+    // canvas for fireworks
+    fxCanvas = document.getElementById('fxCanvas');
+    if (fxCanvas) {
+        fxCtx = fxCanvas.getContext('2d');
+        resizeFxCanvas();
+        window.addEventListener('resize', resizeFxCanvas);
+        requestAnimationFrame(loopFx);
+    }
 
 
     updateDate();
@@ -118,12 +132,114 @@ function makeGuess(){
         rateScore(score);
         recordScore(score);
         updateScore();
+        // celebrate with confetti + canvas fireworks
+        celebrate();
+        // keep the UI reset behavior but allow celebration to run
         reset();
     }
 
     guess.value = ""; // clear input
     guess.focus();
 
+}
+
+/* Celebration: CSS confetti + canvas fireworks Used AI */ 
+function celebrate(){
+    try {
+        document.body.classList.add('celebrate');
+    } catch(e){}
+    startFireworks(1800); // run fireworks for ~1.8s
+    // remove celebrate class after animation
+    setTimeout(function(){
+        try { document.body.classList.remove('celebrate'); } catch(e){}
+    }, 1600);
+}
+
+/* --- Fireworks system (lightweight) --- */
+function resizeFxCanvas(){
+    if(!fxCanvas) return;
+    fxCanvas.width = window.innerWidth * devicePixelRatio;
+    fxCanvas.height = window.innerHeight * devicePixelRatio;
+    fxCanvas.style.width = window.innerWidth + 'px';
+    fxCanvas.style.height = window.innerHeight + 'px';
+    fxCtx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+}
+
+function startFireworks(duration){
+    if(!fxCanvas || !fxCtx) return;
+    if(fxRunning) return;
+    fxRunning = true;
+    var end = Date.now() + duration;
+    var launchInterval = setInterval(function(){
+        // launch cluster of rockets across screen
+        var x = Math.random() * window.innerWidth * 0.8 + window.innerWidth * 0.1;
+        launchRocket(x, window.innerHeight);
+        // occasionally launch more
+        if(Math.random() > 0.6) launchRocket(Math.random()*window.innerWidth, window.innerHeight);
+        if(Date.now() > end){
+            clearInterval(launchInterval);
+            // let remaining particles finish, then stop
+            setTimeout(function(){ fxRunning = false; }, 1200);
+        }
+    }, 180);
+}
+
+function launchRocket(x, y){
+    rockets.push({ x: x, y: y, vx: (Math.random()-0.5)*2, vy: -7 - Math.random()*6, age: 0, explodeAt: 120 - Math.random()*40, color: fxColors[Math.floor(Math.random()*fxColors.length)] });
+}
+
+function explodeRocket(r){
+    var cx = r.x;
+    var cy = r.y;
+    var count = 18 + Math.floor(Math.random()*30);
+    for(var i=0;i<count;i++){
+        var a = Math.random()*Math.PI*2;
+        var s = (Math.random()*4 + 1) * (0.6 + Math.random()*0.8);
+        particles.push({ x: cx, y: cy, vx: Math.cos(a)*s + r.vx*0.2, vy: Math.sin(a)*s + r.vy*0.2, life: 60 + Math.random()*40, age:0, color: r.color });
+    }
+}
+
+function loopFx(){
+    if(!fxCtx) return;
+    fxCtx.clearRect(0,0,fxCanvas.width, fxCanvas.height);
+
+    // update rockets
+    for(var i=rockets.length-1;i>=0;i--){
+        var r = rockets[i];
+        r.age++;
+        r.x += r.vx;
+        r.y += r.vy;
+        r.vy += 0.18; // gravity
+        // draw rocket
+        fxCtx.beginPath();
+        fxCtx.fillStyle = r.color;
+        fxCtx.arc(r.x, r.y, 3, 0, Math.PI*2);
+        fxCtx.fill();
+        if(r.age > r.explodeAt || r.vy > 0){
+            explodeRocket(r);
+            rockets.splice(i,1);
+        }
+    }
+
+    // update particles
+    for(var j=particles.length-1;j>=0;j--){
+        var p = particles[j];
+        p.age++;
+        p.vy += 0.06; // gravity
+        p.x += p.vx;
+        p.y += p.vy;
+        var lifeRatio = 1 - p.age / p.life;
+        if(lifeRatio <= 0){ particles.splice(j,1); continue; }
+        fxCtx.globalAlpha = Math.max(0, lifeRatio);
+        fxCtx.beginPath();
+        fxCtx.fillStyle = p.color;
+        var size = 2 + 2 * lifeRatio;
+        fxCtx.arc(p.x, p.y, size, 0, Math.PI*2);
+        fxCtx.fill();
+    }
+
+    fxCtx.globalAlpha = 1;
+    requestAnimationFrame(loopFx);
 }
 
 function giveUpGame(){

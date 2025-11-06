@@ -1,0 +1,310 @@
+:root {
+	/* Warmth goes from 0 (cold) to 1 (warm). JS should set this via document.documentElement.style.setProperty('--warmth', value) */
+	--warmth: 0;
+	--hue-cold: 210; /* used for programmatic hue interpolation if desired */
+	--hue-warm: 22;
+	--sat: 75%;
+	--light: 55%;
+	--accent: hsl(220 95% 45%);
+	--glass: rgba(255,255,255,0.8);
+	--glass-2: rgba(0,0,0,0.04);
+	--text: #0b1724; /* dark text for better readability */
+	--muted: rgba(11,23,36,0.7);
+	--radius: 12px;
+	--transition-fast: 160ms cubic-bezier(.2,.9,.3,1);
+	--transition: 260ms cubic-bezier(.2,.9,.3,1);
+	font-synthesis: none;
+	box-sizing: border-box;
+}
+
+/* Compute an interpolated hue using the --warmth variable */
+@property --bg-hue {
+	syntax: '<number>';
+	inherits: false;
+	initial-value: 210;
+}
+
+/* fallback - browsers that don't support @property will still get a nice gradient using fixed hues */
+html, body {
+	height: 100%;
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	color: var(--text);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	display: grid;
+	place-items: center;
+	background-color: #f6f8ff; /* light, high-contrast background */
+	/* subtle warm gradient to give depth but keep readability */
+	--bg-hue: calc(var(--hue-cold) + (var(--hue-warm) - var(--hue-cold)) * var(--warmth));
+	background-image: radial-gradient(600px 240px at 10% 12%, rgba(255,235,210,0.45), transparent 25%),
+										linear-gradient(180deg, #f6f8ff 0%, #fffaf5 100%);
+	background-attachment: fixed;
+	transition: background 450ms linear, background-image 450ms linear;
+	padding: 28px;
+	overflow-x: hidden; /* prevent horizontal scroll / sliding */
+}
+
+.game-card {
+	width: min(840px, calc(100% - 48px));
+	background: linear-gradient(180deg, #ffffff, #fbfbfb);
+	border-radius: var(--radius);
+	box-shadow: 0 10px 30px rgba(11,23,36,0.08);
+	padding: 28px;
+	border: 1px solid rgba(11,23,36,0.06);
+	display: grid;
+	grid-template-columns: 1fr 320px;
+	gap: 20px;
+	align-items: start;
+}
+
+.header {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.title {
+	font-size: 1.6rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0;
+	color: var(--text);
+}
+
+.subtitle {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--muted);
+}
+
+.main-area {
+	padding-top: 8px;
+}
+
+.controls {
+	/* Stack the main control sections vertically so they don't sit on one horizontal line */
+	display: block;
+	gap: 12px;
+	margin-top: 16px;
+}
+
+/* Row helper: keep related inputs and buttons on the same line but allow wrapping */
+.row {
+	display: flex;
+	gap: 12px;
+ 	align-items: center;
+ 	flex-wrap: wrap;
+}
+
+/* Make inputs inside rows flexible so they can take available space without causing overflow */
+.row > input[type="text"], .row > input[type="number"], .row > input[type="email"], .row > select {
+ 	flex: 1 1 220px;
+ 	min-width: 120px;
+}
+
+/* Buttons in rows keep their intrinsic size */
+.row > .btn { flex: 0 0 auto; }
+
+/* Label styling inside controls */
+.controls .label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text); }
+
+/* Level field layout */
+.level-field { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border: none; padding: 0; }
+.level-field legend { font-weight: 700; margin-right: 8px; }
+
+/* Guess row specifics */
+.guess-row input#guess { flex: 1 1 240px; }
+
+/* Ghost/secondary button */
+.ghost, .btn--ghost { background: transparent; color: var(--text); border: 1px solid rgba(11,23,36,0.08); box-shadow: none; }
+
+input[type=number] {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 120px;
+	padding: 12px 14px;
+	font-size: 1rem;
+	border-radius: 10px;
+	border: 1px solid rgba(11,23,36,0.08);
+	background: #fff;
+	color: var(--text);
+	outline: none;
+	transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+input[type=number]:focus {
+	box-shadow: 0 6px 18px rgba(11,23,36,0.08), 0 0 0 6px rgba(34,111,255,0.06);
+	transform: translateY(-1px);
+}
+
+.btn {
+	--btn-accent: linear-gradient(90deg, #4f46e5, #3b82f6);
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	border-radius: 10px;
+	border: none;
+	background: var(--btn-accent);
+	color: white;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 8px 18px rgba(59,130,246,0.12);
+	transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.btn:active { transform: translateY(1px) scale(0.995); }
+.btn:hover { filter: brightness(1.04) saturate(1.02); transform: translateY(-2px); }
+
+.side {
+	padding: 18px;
+	background: linear-gradient(180deg, #fbfbfb, #ffffff);
+	border-radius: 12px;
+	border: 1px solid rgba(11,23,36,0.04);
+}
+
+.stat {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	align-items: center;
+}
+
+.message {
+	margin-top: 18px;
+	padding: 14px 16px;
+	border-radius: 10px;
+	background: #fff;
+	color: var(--muted);
+	min-height: 48px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-weight: 600;
+	transition: transform var(--transition), opacity var(--transition);
+	border: 1px solid rgba(11,23,36,0.04);
+}
+
+.message.success {
+	color: #0b3b2e;
+	background: linear-gradient(90deg, #e6ffef, #d6fff0);
+	box-shadow: 0 6px 18px rgba(12,120,80,0.06);
+}
+
+.message.warn { background: linear-gradient(90deg, #fff8e1, #fff0d4); color: #6b4a00; }
+.message.error { background: linear-gradient(90deg, #ffecec, #ffdada); color: #6b1212; }
+
+.history {
+	margin-top: 14px;
+	padding: 12px;
+	border-radius: 10px;
+	background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.06));
+	color: rgba(255,255,255,0.9);
+	font-size: 0.95rem;
+	max-height: 160px;
+	overflow: auto;
+}
+
+.guess-item { padding: 6px 4px; display:flex; justify-content:space-between; gap:10px; }
+.guess-item small { color: rgba(255,255,255,0.75); }
+
+/* feedback animations */
+@keyframes shake {
+	0% { transform: translateX(0); }
+	20% { transform: translateX(-8px); }
+	40% { transform: translateX(6px); }
+	60% { transform: translateX(-4px); }
+	80% { transform: translateX(2px); }
+	100% { transform: translateX(0); }
+}
+
+@keyframes pop {
+	0% { transform: scale(0.96); opacity: 0.9; }
+	50% { transform: scale(1.03); opacity: 1; }
+	100% { transform: scale(1); opacity: 1; }
+}
+
+.shake { animation: shake 420ms var(--transition-fast); }
+.pop { animation: pop 360ms var(--transition-fast); }
+
+/* Celebration visuals when correct guess — JS should toggle `document.body.classList.add('celebrate')` */
+body.celebrate::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	background-image: radial-gradient(circle at 30% 20%, rgba(255,220,140,0.18), transparent 8%),
+										radial-gradient(circle at 70% 40%, rgba(180,240,220,0.14), transparent 8%);
+	opacity: 0;
+	animation: burst 900ms ease-out forwards;
+}
+
+@keyframes burst {
+	0% { opacity: 0; transform: scale(0.96); }
+	35% { opacity: 1; transform: scale(1.02); }
+	100% { opacity: 0; transform: scale(1.0); }
+}
+
+/* falling confetti effect using repeating-linear-gradients on ::after */
+body.celebrate::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	background-image:
+		linear-gradient(120deg, #ff6b6b 0 2px, transparent 2px 8px),
+		linear-gradient(60deg, #ffd166 0 2px, transparent 2px 9px),
+		linear-gradient(0deg, #6de7ff 0 2px, transparent 2px 7px);
+	background-size: 14px 120px, 16px 140px, 12px 100px;
+	background-position: 10% -40px, 50% -20px, 90% -60px;
+	animation: confetti-fall 1400ms linear forwards;
+	opacity: 0.95;
+}
+
+@keyframes confetti-fall {
+	0% { background-position: 10% -40px, 50% -20px, 90% -60px; opacity: 1; }
+	100% { background-position: 10% 120vh, 50% 140vh, 90% 100vh; opacity: 0; }
+}
+
+/* accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+	* { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+}
+
+/* responsive adjustments */
+@media (max-width: 840px) {
+	.game-card { grid-template-columns: 1fr; }
+	.side { order: 3; }
+}
+
+/* small decorative footer */
+.footer-note {
+	font-size: 0.82rem;
+	color: rgba(255,255,255,0.6);
+	margin-top: 12px;
+}
+
+/* Utility helpers for JS toggles */
+.btn--ghost { background: transparent; border: 1px solid rgba(255,255,255,0.06); box-shadow: none; }
+.hidden { display: none !important; }
+
+/* Provide a visible focus ring for keyboard users */
+:focus { outline: none; }
+:focus-visible { box-shadow: 0 0 0 4px rgba(100,140,255,0.16); border-radius: 8px; }
+
+/* Canvas for fireworks should overlay the UI but not capture pointer events */
+#fxCanvas {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 9999;
+}
+
